@@ -1,7 +1,5 @@
 const router = require('express').Router()
-const {
-    root
-} = require('../controllers/rootController')
+const { root } = require('../controllers/rootController')
 
 router.get('/', root);
 
