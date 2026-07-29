@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/userModel')
 const config = require('../config/config')
 
-
 exports.loginPost = async (req, res) => {
     const { username, password } = req.body
 
