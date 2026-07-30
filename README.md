@@ -16,7 +16,7 @@ This project is also my journey to learning production-ready backend technologie
 ## Roadmap
 
 - [x] Project setup
-- [ ] Authentication
+- [x] Authentication
 - [ ] Problem CRUD
 - [ ] Monaco Editor
 - [ ] Submissions
