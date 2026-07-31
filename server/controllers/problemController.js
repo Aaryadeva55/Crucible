@@ -111,3 +111,35 @@ exports.problemDelete = async (req, res) => {
     await problem.deleteOne()
     res.status(204).end()
 }
+
+exports.problemPublish = async (req, res) => {
+    const problem = await Problem.findOne({ slug: req.params.slug })
+
+    if (!problem) {
+        return res.status(404).json({
+            error: 'Problem not found'
+        })
+    }
+
+    problem.isPublished = true
+
+    const updatedProblem = await problem.save()
+
+    res.status(200).json(updatedProblem)
+}
+
+exports.problemUnpublish = async (req, res) => {
+    const problem = await Problem.findOne({ slug: req.params.slug })
+
+    if (!problem) {
+        return res.status(404).json({
+            error: 'Problem not found'
+        })
+    }
+
+    problem.isPublished = false
+
+    const updatedProblem = await problem.save()
+    
+    res.status(200).json(updatedProblem)
+}
