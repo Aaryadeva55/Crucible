@@ -36,3 +36,78 @@ exports.problemGetOne = async (req, res) => {
         })
     }
 }
+
+exports.problemPatch = async (req, res) => {
+    let problem = await Problem.findOne({ slug: req.params.slug })
+
+    if (!problem) {
+        return res.status(404).json({
+            error: 'Problem not found'
+        })
+    }
+
+    if (problem.createdBy.toString() !== req.user.id) {
+        return res.status(403).json({ 
+            error: 'Forbidden'
+        })
+    }
+
+    if (problem.isPublished) {
+        return res.status(403).json({
+            error: 'Published problems cannot be modified'
+        })
+    }
+
+    const {
+        title,
+        difficulty,
+        statement,
+        constraints,
+        examples,
+        tags
+    } = req.body
+
+    const updates = {
+        title,
+        difficulty,
+        statement,
+        constraints,
+        examples,
+        tags
+    }
+
+    for (const [key, value] of Object.entries(updates)) {
+        if (value !== undefined) {
+            problem[key] = value
+        }
+    }
+
+    const updatedProblem = await problem.save()
+    res.status(200).json(updatedProblem)
+    
+}
+
+exports.problemDelete = async (req, res) => {
+    const problem = await Problem.findOne({ slug: req.params.slug })
+
+    if (!problem) {
+        return res.status(404).json({
+            error: 'Problem not found'
+        })
+    }
+
+    if (problem.createdBy.toString() !== req.user.id) {
+        return res.status(403).json({ 
+            error: 'Forbidden'
+        })
+    }
+
+    if (problem.isPublished) {
+        return res.status(403).json({
+            error: 'Published problems cannot be modified'
+        })
+    }
+
+    await problem.deleteOne()
+    res.status(204).end()
+}
