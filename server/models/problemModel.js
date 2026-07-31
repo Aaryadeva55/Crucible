@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const slugify = require('slugify')
 
 const exampleSchema = new mongoose.Schema({
     input: {
@@ -92,3 +93,12 @@ problemSchema.set('toJSON', {
         delete returnedObject.__v
     }
 })
+
+problemSchema.pre('validate', function () {
+    this.slug = slugify(this.title, {
+        lower: true,
+        strict: true
+    })
+})
+
+module.exports = mongoose.model('Problem', problemSchema)

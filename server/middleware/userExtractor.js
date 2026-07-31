@@ -20,3 +20,5 @@ const userExtractor = async (req, res, next) => {
 
     next()
 }
+
+module.exports = userExtractor
