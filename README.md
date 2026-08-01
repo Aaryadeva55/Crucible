@@ -17,7 +17,7 @@ This project is also my journey to learning production-ready backend technologie
 
 - [x] Project setup
 - [x] Authentication
-- [ ] Problem CRUD
+- [x] Problem CRUD
 - [ ] Monaco Editor
 - [ ] Submissions
 - [ ] Redis Leaderboards
