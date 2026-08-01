@@ -6,7 +6,8 @@ const {
     problemPatch,
     problemDelete,
     problemPublish,
-    problemUnpublish
+    problemUnpublish,
+    problemSubmit
 } = require('../controllers/problemController')
 const tokenExtractor = require('../middleware/tokenExtractor')
 const userExtractor = require('../middleware/userExtractor')
@@ -19,5 +20,6 @@ problemRouter.patch('/:slug', tokenExtractor, userExtractor, problemPatch)
 problemRouter.delete('/:slug', tokenExtractor, userExtractor, problemDelete)
 problemRouter.patch('/:slug/publish', tokenExtractor, userExtractor, adminOnly, problemPublish)
 problemRouter.patch('/:slug/unpublish', tokenExtractor, userExtractor, adminOnly, problemUnpublish)
+problemRouter.post('/:slug/submit', tokenExtractor, userExtractor, problemSubmit)
 
 module.exports = problemRouter
