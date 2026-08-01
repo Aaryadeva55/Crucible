@@ -1,4 +1,5 @@
 const Problem = require('../models/problemModel')
+const Submission = require('../models/submissionModel')
 
 exports.problemPost = async (req, res) => {
     const body = req.body
@@ -142,4 +143,31 @@ exports.problemUnpublish = async (req, res) => {
     const updatedProblem = await problem.save()
     
     res.status(200).json(updatedProblem)
+}
+
+exports.problemSubmit = async (req, res) => {
+    const problem = await Problem.findOne({ slug: req.params.slug })
+    const body = req.body
+
+    if (!problem) {
+        return res.status(404).json({
+            error: 'Problem not found'
+        })
+    }
+
+    if (!problem.isPublished) {
+        return res.status(403).json({
+            error: 'Cannot make a submission for an unpublished problem'
+        })
+    }
+
+    const submission = new Submission({
+        user: req.user.id,
+        problem: problem.id,
+        language: body.language,
+        code: body.code
+    })
+
+    const savedSubmission = await submission.save()
+    res.status(201).json(savedSubmission)
 }
