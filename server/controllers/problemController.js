@@ -1,5 +1,6 @@
 const Problem = require('../models/problemModel')
 const Submission = require('../models/submissionModel')
+const submissionQueue = require('../queues/submissionQueue')
 
 exports.problemPost = async (req, res) => {
     const body = req.body
@@ -169,5 +170,8 @@ exports.problemSubmit = async (req, res) => {
     })
 
     const savedSubmission = await submission.save()
+
+    await submissionQueue.add('process-submission', { submissionId: savedSubmission.id })
+
     res.status(201).json(savedSubmission)
 }
