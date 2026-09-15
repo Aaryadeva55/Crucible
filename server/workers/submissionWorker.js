@@ -2,6 +2,7 @@ const { Worker } = require('bullmq')
 const Submission = require('../models/submissionModel')
 const logger = require('../utils/logger')
 const connectDB = require('../config/db')
+const runSubmission = require('../utils/codeRunner')
 
 const connectionOptions = {
   host: 'localhost',
@@ -23,9 +24,16 @@ const startWorker = async () => {
             submission.status = 'Running'
             await submission.save()
 
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            const result = await runSubmission(submission.code)
 
-            submission.status = 'Accepted'
+            if (result.timedOut) {
+                submission.status = 'Time Limit Exceeded'
+            } else if (!result.success) {
+                submission.status = 'Runtime Error'
+            } else {
+                submission.status = 'Accepted'
+            }
+            
             submission.runtime = 120
             submission.memory = 1024
             await submission.save()
