@@ -4,6 +4,7 @@ const userRouter = require('./routes/userRoute')
 const loginRouter = require('./routes/loginRoute')
 const problemRouter = require('./routes/problemRoute')
 const submissionRouter = require('./routes/submissionRoute')
+const testCasesRouter = require('./routes/testCaseRoute')
 const errorHandler = require('./middleware/errorHandler')
 
 const app = express()
@@ -14,6 +15,7 @@ app.use('/api/users', userRouter)
 app.use('/api/login', loginRouter)
 app.use('/api/problems', problemRouter)
 app.use('/api/submissions', submissionRouter)
+app.use('/api/testcases', testCasesRouter)
 app.use(errorHandler)
 
 module.exports = app
