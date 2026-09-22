@@ -1,5 +1,6 @@
 const { Worker } = require('bullmq')
 const Submission = require('../models/submissionModel')
+const TestCase = require('../models/testCaseModel')
 const logger = require('../utils/logger')
 const connectDB = require('../config/db')
 const runSubmission = require('../utils/codeRunner')
@@ -17,6 +18,10 @@ const startWorker = async () => {
         const submissionWorker = new Worker('submissionQueue', async job => {
             const submission = await Submission.findById(job.data.submissionId)
 
+            const testCases = await TestCase.find({
+                problem: submission.problem
+            })
+
             if (!submission) {
                 throw new Error('Submission not found')
             }
@@ -24,15 +29,11 @@ const startWorker = async () => {
             submission.status = 'Running'
             await submission.save()
 
-            const result = await runSubmission(submission.code)
+            const result = await runSubmission(submission.code, testCases)
 
-            if (result.timedOut) {
-                submission.status = 'Time Limit Exceeded'
-            } else if (!result.success) {
-                submission.status = 'Runtime Error'
-            } else {
-                submission.status = 'Accepted'
-            }
+            console.log('Judge result:', result)
+
+            submission.status = result.status
             
             submission.runtime = 120
             submission.memory = 1024
