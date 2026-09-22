@@ -1,45 +1,95 @@
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
-const { exec } = require('child_process')
+const { startContainer, execInContainer, stopContainer } = require('./dockerHelper')
 
-const runSubmission = (code) => {
-    return new Promise((resolve) => {
-        const tempDir = fs.mkdtempSync(
-            path.join(os.tmpdir(), 'crucible-')
+const runSubmission = async (code, testCases) => {
+    const tempDir = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'crucible-')
+    )
+
+    const sourceFile = path.join(tempDir, 'submission.cpp')
+
+    fs.writeFileSync(sourceFile, code)
+
+    let containerId
+
+    try {
+        containerId = await startContainer(tempDir)
+
+        console.log('Container started:', containerId)
+
+        let result = await execInContainer(
+            containerId,
+            'cd /app && g++ submission.cpp -o submission'
         )
 
-        const sourceFile = path.join(tempDir, 'submission.cpp')
-
-        fs.writeFileSync(sourceFile, code)
-
-        const command = `docker run --rm -v "${tempDir}:/app" gcc:latest sh -c "cd /app && g++ submission.cpp -o submission && ./submission"`
-
-        exec(command, { timeout: 10000 }, (error, stdout, stderr) => {
-            try {
-                if (error) {
-                    resolve({
-                        success: false,
-                        stdout,
-                        stderr,
-                        timedOut: error.killed
-                    })
-
-                    return
-                }
-
-                resolve({
-                    success: true,
-                    stdout,
-                    stderr,
-                    timedOut: false
-                })
-
-            } finally {
-                fs.rmSync(tempDir, { recursive: true, force: true })
+        if (!result.success) {
+            console.log('Compilation failed:')
+            console.log(result.stderr)
+            return {
+                status: 'Compilation Error'
             }
+        }
+
+        let status = 'Accepted'
+
+        for (const testCase of testCases) {
+            const inputFile = path.join(tempDir, 'input.txt')
+
+            fs.writeFileSync(inputFile, testCase.input)
+
+            const result = await execInContainer(
+                containerId,
+                'cd /app && ./submission < input.txt'
+            )
+
+            if (result.timedOut) {
+                console.log('Time Limit Exceeded')
+
+                return {
+                    status: 'Time Limit Exceeded'
+                }
+            }
+
+            if (!result.success) {
+                console.log('Runtime Error')
+                console.log(result.stderr)
+
+                return {
+                    status: 'Runtime Error'
+                }
+            }
+
+            const actualOutput = result.stdout.trim()
+            const expectedOutput = testCase.expectedOutput.trim()
+
+            if (actualOutput !== expectedOutput) {
+                console.log('Wrong Answer')
+                status = 'Wrong Answer'
+                break
+            }
+
+            console.log('Input:', testCase.input)
+            console.log('Output:', result.stdout)
+            console.log('Test case passed')
+        }
+        
+        console.log('Compilation successful!')
+        return { status }
+        
+    } finally {
+        if (containerId) {
+            await stopContainer(containerId)
+        }
+
+        fs.rmSync(tempDir, {
+            recursive: true,
+            force: true
         })
-    })
+
+        console.log('Cleaned up.')
+    }
 }
 
 module.exports = runSubmission
