@@ -37,7 +37,7 @@ const startWorker = async () => {
             submission.failedTestCase = result.failedTestCase ?? null
             submission.actualOutput = result.actualOutput ?? null
             submission.expectedOutput = result.expectedOutput ?? null
-            submission.runtime = 120
+            submission.runtime = result.runtime ? Math.round(result.runtime) : null
             submission.memory = 1024
             await submission.save()
         }, { connection: connectionOptions })
