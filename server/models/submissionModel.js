@@ -53,6 +53,21 @@ const submissionSchema = new mongoose.Schema({
     memory: {
         type: Number,
         default: null
+    },
+
+    failedTestCase: {
+        type: Number,
+        default: null
+    },
+
+    actualOutput: {
+        type: String,
+        default: null
+    },
+
+    expectedOutput: {
+        type: String,
+        default: null
     }
 }, { timestamps: true })
 
