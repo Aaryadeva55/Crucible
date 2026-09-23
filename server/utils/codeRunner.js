@@ -1,6 +1,7 @@
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
+const { performance } = require('perf_hooks')
 const { startContainer, execInContainer, stopContainer } = require('./dockerHelper')
 const normalizeOutput = require('../utils/normalizeOutput')
 
@@ -29,11 +30,12 @@ const runSubmission = async (code, testCases) => {
             console.log('Compilation failed:')
             console.log(result.stderr)
             return {
-                status: 'Compilation Error'
+                status: 'Compilation Error',
+                runtime: null
             }
         }
 
-        let status = 'Accepted'
+        let totalRuntime = 0
 
         for (let i = 0; i < testCases.length; i++) {
             const testCase = testCases[i]
@@ -41,17 +43,26 @@ const runSubmission = async (code, testCases) => {
 
             fs.writeFileSync(inputFile, testCase.input)
 
+            const startTime = performance.now()
+
             const result = await execInContainer(
                 containerId,
                 'cd /app && ./submission < input.txt'
             )
+
+            const endTime = performance.now()
+
+            const runtime = endTime - startTime
+
+            totalRuntime += runtime
 
             if (result.timedOut) {
                 console.log('Time Limit Exceeded')
 
                 return {
                     status: 'Time Limit Exceeded',
-                    failedTestCase: i + 1
+                    failedTestCase: i + 1,
+                    runtime: totalRuntime
                 }
             }
 
@@ -61,7 +72,8 @@ const runSubmission = async (code, testCases) => {
 
                 return {
                     status: 'Runtime Error',
-                    failedTestCase: i + 1
+                    failedTestCase: i + 1,
+                    runtime: totalRuntime
                 }
             }
 
@@ -74,7 +86,8 @@ const runSubmission = async (code, testCases) => {
                     status: 'Wrong Answer',
                     failedTestCase: i + 1,
                     actualOutput,
-                    expectedOutput
+                    expectedOutput,
+                    runtime: totalRuntime
                 }
             }
 
@@ -84,7 +97,10 @@ const runSubmission = async (code, testCases) => {
         }
         
         console.log('Compilation successful!')
-        return { status }
+        return { 
+            status: 'Accepted',
+            runtime: totalRuntime
+        }
         
     } finally {
         if (containerId) {
