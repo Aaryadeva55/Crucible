@@ -34,7 +34,9 @@ const startWorker = async () => {
             console.log('Judge result:', result)
 
             submission.status = result.status
-            
+            submission.failedTestCase = result.failedTestCase ?? null
+            submission.actualOutput = result.actualOutput ?? null
+            submission.expectedOutput = result.expectedOutput ?? null
             submission.runtime = 120
             submission.memory = 1024
             await submission.save()

@@ -35,7 +35,8 @@ const runSubmission = async (code, testCases) => {
 
         let status = 'Accepted'
 
-        for (const testCase of testCases) {
+        for (let i = 0; i < testCases.length; i++) {
+            const testCase = testCases[i]
             const inputFile = path.join(tempDir, 'input.txt')
 
             fs.writeFileSync(inputFile, testCase.input)
@@ -49,7 +50,8 @@ const runSubmission = async (code, testCases) => {
                 console.log('Time Limit Exceeded')
 
                 return {
-                    status: 'Time Limit Exceeded'
+                    status: 'Time Limit Exceeded',
+                    failedTestCase: i + 1
                 }
             }
 
@@ -58,7 +60,8 @@ const runSubmission = async (code, testCases) => {
                 console.log(result.stderr)
 
                 return {
-                    status: 'Runtime Error'
+                    status: 'Runtime Error',
+                    failedTestCase: i + 1
                 }
             }
 
@@ -67,8 +70,12 @@ const runSubmission = async (code, testCases) => {
 
             if (actualOutput !== expectedOutput) {
                 console.log('Wrong Answer')
-                status = 'Wrong Answer'
-                break
+                return {
+                    status: 'Wrong Answer',
+                    failedTestCase: i + 1,
+                    actualOutput,
+                    expectedOutput
+                }
             }
 
             console.log('Input:', testCase.input)
