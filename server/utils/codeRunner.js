@@ -2,6 +2,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const { startContainer, execInContainer, stopContainer } = require('./dockerHelper')
+const normalizeOutput = require('../utils/normalizeOutput')
 
 const runSubmission = async (code, testCases) => {
     const tempDir = fs.mkdtempSync(
@@ -61,8 +62,8 @@ const runSubmission = async (code, testCases) => {
                 }
             }
 
-            const actualOutput = result.stdout.trim()
-            const expectedOutput = testCase.expectedOutput.trim()
+            const actualOutput = normalizeOutput(result.stdout)
+            const expectedOutput = normalizeOutput(testCase.expectedOutput)
 
             if (actualOutput !== expectedOutput) {
                 console.log('Wrong Answer')
