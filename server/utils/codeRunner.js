@@ -2,7 +2,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const { performance } = require('perf_hooks')
-const { startContainer, execInContainer, stopContainer } = require('./dockerHelper')
+const { startContainer, execInContainer, checkOOMKilled, stopContainer } = require('./dockerHelper')
 const normalizeOutput = require('../utils/normalizeOutput')
 
 const runSubmission = async (code, testCases) => {
@@ -67,6 +67,18 @@ const runSubmission = async (code, testCases) => {
             }
 
             if (!result.success) {
+                const oomKilled = await checkOOMKilled(containerId)
+
+                if (oomKilled) {
+                    console.log('Memory Limit Exceeded')
+
+                    return {
+                        status: 'Memory Limit Exceeded',
+                        failedTestCase: i + 1,
+                        runtime: totalRuntime
+                    }
+                }
+                
                 console.log('Runtime Error')
                 console.log(result.stderr)
 
