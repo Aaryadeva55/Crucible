@@ -2,7 +2,7 @@ const { exec } = require('child_process')
 
 const startContainer = (tempDir) => {
     return new Promise((resolve, reject) => {
-        const command = `docker run -d --rm -v "${tempDir}:/app" gcc:latest sleep 300`
+        const command = `docker run -d --rm --memory=128m -v "${tempDir}:/app" gcc:latest sleep 300`
 
         exec(command, (error, stdout, stderr) => {
             if (error) {
@@ -42,6 +42,22 @@ const execInContainer = (containerId, command, timeout = 2000) => {
     })
 }
 
+const checkOOMKilled = (containerId) => {
+    return new Promise((resolve) => {
+        exec(
+            `docker inspect ${containerId} --format "{{.State.OOMKilled}}"`,
+            (error, stdout) => {
+                if (error) {
+                    resolve(false)
+                    return
+                }
+
+                resolve(stdout.trim() === 'true')
+            }
+        )
+    })
+}
+
 const stopContainer = (containerId) => {
     return new Promise((resolve) => {
         exec(
@@ -53,4 +69,4 @@ const stopContainer = (containerId) => {
     })
 }
 
-module.exports = { startContainer, execInContainer, stopContainer }
+module.exports = { startContainer, execInContainer, stopContainer, checkOOMKilled }
