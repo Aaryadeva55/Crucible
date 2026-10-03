@@ -2,7 +2,7 @@ const { exec } = require('child_process')
 
 const startContainer = (tempDir) => {
     return new Promise((resolve, reject) => {
-        const command = `docker run -d --rm --memory=128m -v "${tempDir}:/app" gcc:latest sleep 300`
+        const command = `docker run -d --rm --memory=128m --cpus=1 --pids-limit=64 -v "${tempDir}:/app" gcc:latest sleep 300`
 
         exec(command, (error, stdout, stderr) => {
             if (error) {
