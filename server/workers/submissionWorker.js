@@ -29,7 +29,7 @@ const startWorker = async () => {
             submission.status = 'Running'
             await submission.save()
 
-            const result = await runSubmission(submission.code, testCases)
+            const result = await runSubmission(submission.code, testCases, submission.language)
 
             console.log('Judge result:', result)
 
