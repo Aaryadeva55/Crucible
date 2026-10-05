@@ -3,28 +3,40 @@ const os = require('os')
 const path = require('path')
 const { performance } = require('perf_hooks')
 const { startContainer, execInContainer, checkOOMKilled, stopContainer } = require('./dockerHelper')
-const normalizeOutput = require('../utils/normalizeOutput')
+const languageRunners = require('./languageRunners')
+const normalizeOutput = require('./normalizeOutput')
 
-const runSubmission = async (code, testCases) => {
+const runSubmission = async (code, testCases, language) => {
+    const runner = languageRunners[language]
+
+    if (!runner) {
+        return {
+            status: 'Internal Error'
+        }
+    }
+
     const tempDir = fs.mkdtempSync(
         path.join(os.tmpdir(), 'crucible-')
     )
 
-    const sourceFile = path.join(tempDir, 'submission.cpp')
+    const sourceFile = path.join(tempDir, runner.sourceFile)
 
     fs.writeFileSync(sourceFile, code)
 
     let containerId
 
     try {
-        containerId = await startContainer(tempDir)
+        containerId = await startContainer(tempDir, runner.image)
 
         console.log('Container started:', containerId)
 
-        let result = await execInContainer(
-            containerId,
-            'cd /app && g++ submission.cpp -o submission'
-        )
+        const result = runner.compileCommand 
+            ? await execInContainer(
+                containerId,
+                runner.compileCommand,
+                10000
+            )
+            : { success: true }
 
         if (!result.success) {
             console.log('Compilation failed:')
@@ -33,6 +45,10 @@ const runSubmission = async (code, testCases) => {
                 status: 'Compilation Error',
                 runtime: null
             }
+        }
+
+        if (runner.compileCommand) {
+            console.log('Compilation successful!')
         }
 
         let totalRuntime = 0
@@ -47,7 +63,7 @@ const runSubmission = async (code, testCases) => {
 
             const result = await execInContainer(
                 containerId,
-                'cd /app && ./submission < input.txt'
+                `${runner.runCommand} < input.txt`
             )
 
             const endTime = performance.now()
@@ -108,7 +124,6 @@ const runSubmission = async (code, testCases) => {
             console.log('Test case passed')
         }
         
-        console.log('Compilation successful!')
         return { 
             status: 'Accepted',
             runtime: totalRuntime
